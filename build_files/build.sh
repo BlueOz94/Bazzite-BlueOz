@@ -1,16 +1,15 @@
 #!/bin/bash
 set -ouex pipefail
 
-# Install extra packages
+### Install extra packages
 dnf5 install -y tmux
 
-# Enable systemd services
+### Enable systemd services
 systemctl enable podman.socket
 
-# Add the Linux Surface repo
-curl -o /etc/yum.repos.d/linux-surface.repo https://pkg.repo.linuxsurface.com/fedora/l>
+### Add Surface kernel support
 
-# Replace the default Fedora kernel with Linux Surface kernel
+# Remove Fedora's default kernel and libwacom
 rpm-ostree override remove \
   kernel \
   kernel-core \
@@ -19,7 +18,18 @@ rpm-ostree override remove \
   libwacom \
   libwacom-data
 
-rpm-ostree install \
+# Add the Linux Surface repository
+cat > /etc/yum.repos.d/linux-surface.repo << EOF
+[linux-surface]
+name=Linux Surface Kernel
+baseurl=https://pkg.repo.linuxsurface.com/fedora/\$releasever/\$basearch
+enabled=1
+gpgcheck=1
+gpgkey=https://pkg.repo.linuxsurface.com/keys/3DFA4A0333A3D3B3.gpg
+EOF
+
+# Install Surface kernel and related packages
+dnf5 install -y \
   kernel-surface \
   iptsd \
   libwacom-surface \
